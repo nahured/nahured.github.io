@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculadora Regla de 3 - TV a Tablet</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      max-width: 540px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .container {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #34495e;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #bdc3c7;
+      border-radius: 6px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52,152,219,0.15);
+    }
+    button {
+      grid-column: 1 / -1;
+      margin-top: 20px;
+      padding: 14px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 17px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    #resultado {
+      margin-top: 28px;
+      padding: 18px;
+      background: #ecf0f1;
+      border-radius: 8px;
+      font-size: 1.1em;
+      min-height: 60px;
+      white-space: pre-wrap;
+    }
+    #resultado strong {
+      color: #e74c3c;
+    }
+    .copy-container {
+      margin-top: 12px;
+      text-align: right;
+    }
+    .copy-btn {
+      padding: 6px 14px;
+      background: #7f8c8d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .copy-btn:hover {
+      background: #95a5a6;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Calculadora Regla de 3<br>TV → Tablet</h1>
+
+  <div class="container">
+    <div class="grid">
+
+      <div>
+        <label>TV ancho (mm)</label>
+        <input type="number" id="d_x" value="597.89" step="0.1">
+      </div>
+
+      <div>
+        <label>Tablet ancho (mm)</label>
+        <input type="number" id="t_x" value="254" step="0.1">
+      </div>
+
+      <div>
+        <label>TV alto (mm)</label>
+        <input type="number" id="d_y" value="336.31" step="0.1">
+      </div>
+
+      <div>
+        <label>Tablet alto (mm)</label>
+        <input type="number" id="t_y" value="159" step="0.1">
+      </div>
+
+      <div>
+        <label>TV resolución X (px)</label>
+        <input type="number" id="p_x" value="1920">
+      </div>
+
+      <div>
+        <label>TV resolución Y (px)</label>
+        <input type="number" id="p_y" value="1080">
+      </div>
+
+    </div>
+
+    <button onclick="calcular()">Calcular píxeles en la tablet</button>
+
+    <div id="resultado"></div>
+
+    <div class="copy-container">
+      <button class="copy-btn" onclick="copiarResultado()" id="btnCopiar" style="display:none;">
+        Copiar resultado
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function calcular() {
+      const d_x = parseFloat(document.getElementById('d_x').value) || 0;
+      const d_y = parseFloat(document.getElementById('d_y').value) || 0;
+      const p_x = parseFloat(document.getElementById('p_x').value) || 0;
+      const p_y = parseFloat(document.getElementById('p_y').value) || 0;
+      const t_x = parseFloat(document.getElementById('t_x').value) || 0;
+      const t_y = parseFloat(document.getElementById('t_y').value) || 0;
+
+      if (d_x === 0 || t_x === 0 || p_x === 0) {
+        document.getElementById('resultado').innerHTML = 
+          '<span style="color:#e74c3c">Faltan valores importantes (ancho TV, ancho tablet o resolución X)</span>';
+        return;
+      }
+
+      // regla de tres simple
+      const tablet_px_x = Math.round((p_x * t_x) / d_x);
+      const tablet_px_y = Math.round((p_y * t_y) / d_y);
+
+      const texto = 
+`Resultado aproximado para la tablet:
+
+→ ${tablet_px_x} × ${tablet_px_y} píxeles
+
+Cálculo:
+X = ( ${p_x} × ${t_x} ) / ${d_x}  ≈ ${tablet_px_x}
+Y = ( ${p_y} × ${t_y} ) / ${d_y}  ≈ ${tablet_px_y}`;
+
+      document.getElementById('resultado').textContent = texto;
+      document.getElementById('btnCopiar').style.display = 'inline-block';
+      
+      // guardamos el texto para copiar
+      window.ultimoResultado = texto;
+    }
+
+    function copiarResultado() {
+      if (!window.ultimoResultado) return;
+      
+      navigator.clipboard.writeText(window.ultimoResultado)
+        .then(() => {
+          const btn = document.getElementById('btnCopiar');
+          const textoOriginal = btn.textContent;
+          btn.textContent = "¡Copiado!";
+          btn.style.background = "#27ae60";
+          setTimeout(() => {
+            btn.textContent = textoOriginal;
+            btn.style.background = "#7f8c8d";
+          }, 1800);
+        })
+        .catch(err => {
+          alert("No se pudo copiar automáticamente.\n\nCopia manualmente el texto.");
+        });
+    }
+  </script>
+
+</body>
+</html>
