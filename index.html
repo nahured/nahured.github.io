@@ -15,6 +15,19 @@
     h1 {
       text-align: center;
       color: #2c3e50;
+      margin-bottom: 8px;
+    }
+    .lang-selector {
+      text-align: right;
+      margin-bottom: 16px;
+    }
+    .lang-selector select {
+      padding: 6px 10px;
+      font-size: 0.95em;
+      border-radius: 6px;
+      border: 1px solid #bdc3c7;
+      background: white;
+      cursor: pointer;
     }
     .container {
       background: white;
@@ -93,55 +106,316 @@
 </head>
 <body>
 
-  <h1>Calculadora Regla de 3<br>Monitor/TV → Tablet</h1>
+  <div class="lang-selector">
+    <select id="languageSelect" onchange="cambiarIdioma(this.value)">
+      <option value="es">Español</option>
+      <option value="en">English</option>
+      <option value="pt">Português</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+      <option value="it">Italiano</option>
+      <option value="nl">Nederlands</option>
+      <option value="pl">Polski</option>
+      <option value="ru">Русский</option>
+      <option value="ja">日本語</option>
+      <option value="ko">한국어</option>
+      <option value="zh">中文</option>
+      <option value="ar">العربية</option>
+    </select>
+  </div>
+
+  <h1 id="titulo">Calculadora Regla de 3<br>Monitor/TV → Tablet</h1>
 
   <div class="container">
     <div class="grid">
 
       <div>
-        <label>Monitor/TV ancho (mm)</label>
+        <label id="lbl_d_x">Monitor/TV ancho (mm)</label>
         <input type="number" id="d_x" value="597.89" step="0.1">
       </div>
 
       <div>
-        <label>Tablet ancho (mm)</label>
+        <label id="lbl_t_x">Tablet ancho (mm)</label>
         <input type="number" id="t_x" value="254" step="0.1">
       </div>
 
       <div>
-        <label>Monitor/TV alto (mm)</label>
+        <label id="lbl_d_y">Monitor/TV alto (mm)</label>
         <input type="number" id="d_y" value="336.31" step="0.1">
       </div>
 
       <div>
-        <label>Tablet alto (mm)</label>
+        <label id="lbl_t_y">Tablet alto (mm)</label>
         <input type="number" id="t_y" value="159" step="0.1">
       </div>
 
       <div>
-        <label>Monitor/TV resolución X (px)</label>
+        <label id="lbl_p_x">Monitor/TV resolución X (px)</label>
         <input type="number" id="p_x" value="1920">
       </div>
 
       <div>
-        <label>Monitor/TV resolución Y (px)</label>
+        <label id="lbl_p_y">Monitor/TV resolución Y (px)</label>
         <input type="number" id="p_y" value="1080">
       </div>
 
     </div>
 
-    <button onclick="calcular()">Calcular píxeles en la tablet</button>
+    <button id="btnCalcular" onclick="calcular()">Calcular píxeles en la tablet</button>
 
     <div id="resultado"></div>
 
     <div class="copy-container">
       <button class="copy-btn" onclick="copiarResultado()" id="btnCopiar" style="display:none;">
-        Copiar resultado
+        <span id="txtCopiar">Copiar resultado</span>
       </button>
     </div>
   </div>
 
   <script>
+    // ────────────────────────────────────────────────
+    // Traducciones
+    // ────────────────────────────────────────────────
+    const traducciones = {
+      es: {
+        titulo: "Calculadora Regla de 3<br>Monitor/TV → Tablet",
+        lbl_d_x: "Monitor/TV ancho (mm)",
+        lbl_t_x: "Tablet ancho (mm)",
+        lbl_d_y: "Monitor/TV alto (mm)",
+        lbl_t_y: "Tablet alto (mm)",
+        lbl_p_x: "Monitor/TV resolución X (px)",
+        lbl_p_y: "Monitor/TV resolución Y (px)",
+        btnCalcular: "Calcular píxeles en la tablet",
+        txtCopiar: "Copiar resultado",
+        resultadoTitulo: "Resultado aproximado para la tablet:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "Faltan valores importantes (ancho TV, ancho tablet o resolución X)"
+      },
+      en: {
+        titulo: "Rule of 3 Calculator<br>Monitor/TV → Tablet",
+        lbl_d_x: "Monitor/TV width (mm)",
+        lbl_t_x: "Tablet width (mm)",
+        lbl_d_y: "Monitor/TV height (mm)",
+        lbl_t_y: "Tablet height (mm)",
+        lbl_p_x: "Monitor/TV resolution X (px)",
+        lbl_p_y: "Monitor/TV resolution Y (px)",
+        btnCalcular: "Calculate pixels on tablet",
+        txtCopiar: "Copy result",
+        resultadoTitulo: "Approximate result for the tablet:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "Missing important values (TV width, tablet width or X resolution)"
+      },
+      pt: {
+        titulo: "Calculadora Regra de 3<br>Monitor/TV → Tablet",
+        lbl_d_x: "Monitor/TV largura (mm)",
+        lbl_t_x: "Tablet largura (mm)",
+        lbl_d_y: "Monitor/TV altura (mm)",
+        lbl_t_y: "Tablet altura (mm)",
+        lbl_p_x: "Monitor/TV resolução X (px)",
+        lbl_p_y: "Monitor/TV resolução Y (px)",
+        btnCalcular: "Calcular pixels no tablet",
+        txtCopiar: "Copiar resultado",
+        resultadoTitulo: "Resultado aproximado para o tablet:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "Faltam valores importantes (largura TV, largura tablet ou resolução X)"
+      },
+      fr: {
+        titulo: "Calculatrice Règle de Trois<br>Moniteur/TV → Tablette",
+        lbl_d_x: "Moniteur/TV largeur (mm)",
+        lbl_t_x: "Tablette largeur (mm)",
+        lbl_d_y: "Moniteur/TV hauteur (mm)",
+        lbl_t_y: "Tablette hauteur (mm)",
+        lbl_p_x: "Moniteur/TV résolution X (px)",
+        lbl_p_y: "Moniteur/TV résolution Y (px)",
+        btnCalcular: "Calculer les pixels sur la tablette",
+        txtCopiar: "Copier le résultat",
+        resultadoTitulo: "Résultat approximatif pour la tablette :",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "Valeurs importantes manquantes (largeur TV, largeur tablette ou résolution X)"
+      },
+      de: {
+        titulo: "Dreiersatz-Rechner<br>Monitor/TV → Tablet",
+        lbl_d_x: "Monitor/TV Breite (mm)",
+        lbl_t_x: "Tablet Breite (mm)",
+        lbl_d_y: "Monitor/TV Höhe (mm)",
+        lbl_t_y: "Tablet Höhe (mm)",
+        lbl_p_x: "Monitor/TV Auflösung X (px)",
+        lbl_p_y: "Monitor/TV Auflösung Y (px)",
+        btnCalcular: "Pixel auf dem Tablet berechnen",
+        txtCopiar: "Ergebnis kopieren",
+        resultadoTitulo: "Ungefähres Ergebnis für das Tablet:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "Wichtige Werte fehlen (TV-Breite, Tablet-Breite oder X-Auflösung)"
+      },
+      it: {
+        titulo: "Calcolatrice Regola di Tre<br>Monitor/TV → Tablet",
+        lbl_d_x: "Monitor/TV larghezza (mm)",
+        lbl_t_x: "Tablet larghezza (mm)",
+        lbl_d_y: "Monitor/TV altezza (mm)",
+        lbl_t_y: "Tablet altezza (mm)",
+        lbl_p_x: "Monitor/TV risoluzione X (px)",
+        lbl_p_y: "Monitor/TV risoluzione Y (px)",
+        btnCalcular: "Calcola i pixel sul tablet",
+        txtCopiar: "Copia risultato",
+        resultadoTitulo: "Risultato approssimativo per il tablet:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "Mancano valori importanti (larghezza TV, larghezza tablet o risoluzione X)"
+      },
+      nl: {
+        titulo: "Regel van Drie Calculator<br>Monitor/TV → Tablet",
+        lbl_d_x: "Monitor/TV breedte (mm)",
+        lbl_t_x: "Tablet breedte (mm)",
+        lbl_d_y: "Monitor/TV hoogte (mm)",
+        lbl_t_y: "Tablet hoogte (mm)",
+        lbl_p_x: "Monitor/TV resolutie X (px)",
+        lbl_p_y: "Monitor/TV resolutie Y (px)",
+        btnCalcular: "Bereken pixels op tablet",
+        txtCopiar: "Resultaat kopiëren",
+        resultadoTitulo: "Benaderend resultaat voor de tablet:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "Belangrijke waarden ontbreken (TV-breedte, tablet-breedte of X-resolutie)"
+      },
+      pl: {
+        titulo: "Kalkulator Reguły Trzech<br>Monitor/TV → Tablet",
+        lbl_d_x: "Monitor/TV szerokość (mm)",
+        lbl_t_x: "Tablet szerokość (mm)",
+        lbl_d_y: "Monitor/TV wysokość (mm)",
+        lbl_t_y: "Tablet wysokość (mm)",
+        lbl_p_x: "Monitor/TV rozdzielczość X (px)",
+        lbl_p_y: "Monitor/TV rozdzielczość Y (px)",
+        btnCalcular: "Oblicz piksele na tablecie",
+        txtCopiar: "Kopiuj wynik",
+        resultadoTitulo: "Przybliżony wynik dla tabletu:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "Brak ważnych wartości (szerokość TV, szerokość tabletu lub rozdzielczość X)"
+      },
+      ru: {
+        titulo: "Калькулятор правила трёх<br>Монитор/TV → Планшет",
+        lbl_d_x: "Монитор/TV ширина (мм)",
+        lbl_t_x: "Планшет ширина (мм)",
+        lbl_d_y: "Монитор/TV высота (мм)",
+        lbl_t_y: "Планшет высота (мм)",
+        lbl_p_x: "Монитор/TV разрешение X (пикс)",
+        lbl_p_y: "Монитор/TV разрешение Y (пикс)",
+        btnCalcular: "Рассчитать пиксели на планшете",
+        txtCopiar: "Скопировать результат",
+        resultadoTitulo: "Приблизительный результат для планшета:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "Отсутствуют важные значения (ширина ТВ, ширина планшета или разрешение X)"
+      },
+      ja: {
+        titulo: "三項比例計算機<br>モニター/TV → タブレット",
+        lbl_d_x: "モニター/TV 幅 (mm)",
+        lbl_t_x: "タブレット 幅 (mm)",
+        lbl_d_y: "モニター/TV 高さ (mm)",
+        lbl_t_y: "タブレット 高さ (mm)",
+        lbl_p_x: "モニター/TV 解像度 X (px)",
+        lbl_p_y: "モニター/TV 解像度 Y (px)",
+        btnCalcular: "タブレットのピクセルを計算",
+        txtCopiar: "結果をコピー",
+        resultadoTitulo: "タブレットのおおよその結果：",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "重要な値が不足しています（TV幅、タブレット幅またはX解像度）"
+      },
+      ko: {
+        titulo: "삼칙계산기<br>모니터/TV → 태블릿",
+        lbl_d_x: "모니터/TV 너비 (mm)",
+        lbl_t_x: "태블릿 너비 (mm)",
+        lbl_d_y: "모니터/TV 높이 (mm)",
+        lbl_t_y: "태블릿 높이 (mm)",
+        lbl_p_x: "모니터/TV 해상도 X (px)",
+        lbl_p_y: "모니터/TV 해상도 Y (px)",
+        btnCalcular: "태블릿의 픽셀 계산",
+        txtCopiar: "결과 복사",
+        resultadoTitulo: "태블릿에 대한 대략적인 결과:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "중요한 값이 누락되었습니다 (TV 너비, 태블릿 너비 또는 X 해상도)"
+      },
+      zh: {
+        titulo: "三率计算器<br>显示器/电视 → 平板",
+        lbl_d_x: "显示器/电视 宽度 (mm)",
+        lbl_t_x: "平板 宽度 (mm)",
+        lbl_d_y: "显示器/电视 高度 (mm)",
+        lbl_t_y: "平板 高度 (mm)",
+        lbl_p_x: "显示器/电视 分辨率 X (px)",
+        lbl_p_y: "显示器/电视 分辨率 Y (px)",
+        btnCalcular: "计算平板上的像素",
+        txtCopiar: "复制结果",
+        resultadoTitulo: "平板的大致结果：",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "缺少重要值（电视宽度、平板宽度或 X 分辨率）"
+      },
+      ar: {
+        titulo: "آلة حاسبة قاعدة الثلاثة<br>شاشة/تلفاز → تابلت",
+        lbl_d_x: "شاشة/تلفاز العرض (مم)",
+        lbl_t_x: "تابلت العرض (مم)",
+        lbl_d_y: "شاشة/تلفاز الارتفاع (مم)",
+        lbl_t_y: "تابلت الارتفاع (مم)",
+        lbl_p_x: "شاشة/تلفاز الدقة X (بكسل)",
+        lbl_p_y: "شاشة/تلفاز الدقة Y (بكسل)",
+        btnCalcular: "حساب البكسل على التابلت",
+        txtCopiar: "نسخ النتيجة",
+        resultadoTitulo: "النتيجة التقريبية للتابلت:",
+        calculoX: "X =",
+        calculoY: "Y =",
+        error: "قيم مهمة ناقصة (عرض التلفاز، عرض التابلت أو دقة X)"
+      }
+    };
+
+    let idiomaActual = "es";
+
+    function cambiarIdioma(idioma) {
+      if (!traducciones[idioma]) return;
+      idiomaActual = idioma;
+      const t = traducciones[idioma];
+
+      document.getElementById("titulo").innerHTML = t.titulo;
+      document.getElementById("lbl_d_x").textContent = t.lbl_d_x;
+      document.getElementById("lbl_t_x").textContent = t.lbl_t_x;
+      document.getElementById("lbl_d_y").textContent = t.lbl_d_y;
+      document.getElementById("lbl_t_y").textContent = t.lbl_t_y;
+      document.getElementById("lbl_p_x").textContent = t.lbl_p_x;
+      document.getElementById("lbl_p_y").textContent = t.lbl_p_y;
+      document.getElementById("btnCalcular").textContent = t.btnCalcular;
+      document.getElementById("txtCopiar").textContent = t.txtCopiar;
+
+      // También traducimos el resultado si ya existe
+      if (window.ultimoResultadoRaw) {
+        mostrarResultado(window.ultimoResultadoRaw);
+      }
+    }
+
+    function mostrarResultado(data) {
+      const t = traducciones[idiomaActual];
+
+      const texto = 
+`${t.resultadoTitulo}
+
+→ ${data.px_x} × ${data.px_y} píxeles
+
+Cálculo:
+${t.calculoX} ( ${data.p_x} × ${data.t_x} ) / ${data.d_x}  ≈ ${data.px_x}
+${t.calculoY} ( ${data.p_y} × ${data.t_y} ) / ${data.d_y}  ≈ ${data.px_y}`;
+
+      document.getElementById('resultado').textContent = texto;
+      document.getElementById('btnCopiar').style.display = 'inline-block';
+      
+      window.ultimoResultado = texto;           // para copiar
+      window.ultimoResultadoRaw = data;         // para poder retraducir
+    }
+
     function calcular() {
       const d_x = parseFloat(document.getElementById('d_x').value) || 0;
       const d_y = parseFloat(document.getElementById('d_y').value) || 0;
@@ -151,29 +425,18 @@
       const t_y = parseFloat(document.getElementById('t_y').value) || 0;
 
       if (d_x === 0 || t_x === 0 || p_x === 0) {
+        const t = traducciones[idiomaActual];
         document.getElementById('resultado').innerHTML = 
-          '<span style="color:#e74c3c">Faltan valores importantes (ancho TV, ancho tablet o resolución X)</span>';
+          `<span style="color:#e74c3c">${t.error}</span>`;
+        document.getElementById('btnCopiar').style.display = 'none';
         return;
       }
 
-      // regla de tres simple
-      const tablet_px_x = Math.round((p_x * t_x) / d_x);
-      const tablet_px_y = Math.round((p_y * t_y) / d_y);
+      const px_x = Math.round((p_x * t_x) / d_x);
+      const px_y = Math.round((p_y * t_y) / d_y);
 
-      const texto = 
-`Resultado aproximado para la tablet:
-
-→ ${tablet_px_x} × ${tablet_px_y} píxeles
-
-Cálculo:
-X = ( ${p_x} × ${t_x} ) / ${d_x}  ≈ ${tablet_px_x}
-Y = ( ${p_y} × ${t_y} ) / ${d_y}  ≈ ${tablet_px_y}`;
-
-      document.getElementById('resultado').textContent = texto;
-      document.getElementById('btnCopiar').style.display = 'inline-block';
-      
-      // guardamos el texto para copiar
-      window.ultimoResultado = texto;
+      const data = { d_x, t_x, p_x, px_x, d_y, t_y, p_y, px_y };
+      mostrarResultado(data);
     }
 
     function copiarResultado() {
@@ -183,17 +446,22 @@ Y = ( ${p_y} × ${t_y} ) / ${d_y}  ≈ ${tablet_px_y}`;
         .then(() => {
           const btn = document.getElementById('btnCopiar');
           const textoOriginal = btn.textContent;
-          btn.textContent = "¡Copiado!";
+          btn.textContent = idiomaActual === "en" ? "Copied!" : 
+                           idiomaActual === "pt" ? "Copiado!" : 
+                           "¡Copiado!";
           btn.style.background = "#27ae60";
           setTimeout(() => {
             btn.textContent = textoOriginal;
             btn.style.background = "#7f8c8d";
           }, 1800);
         })
-        .catch(err => {
+        .catch(() => {
           alert("No se pudo copiar automáticamente.\n\nCopia manualmente el texto.");
         });
     }
+
+    // Inicializamos en español
+    cambiarIdioma("es");
   </script>
 
 </body>
