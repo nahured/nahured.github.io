@@ -1,0 +1,280 @@
+
+<style>
+  #kb-root { padding: 1rem 0; font-family: var(--font-mono); }
+  #kb-root * { box-sizing: border-box; }
+  .kb-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .kb-stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+  .kb-stat-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; font-family: var(--font-sans); }
+  .kb-stat-val { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+  .kb-stat-val.good { color: #1D9E75; }
+  .kb-stat-val.bad { color: #E24B4A; }
+  #kb-canvas-wrap { position: relative; width: 100%; height: 220px; background: var(--color-background-secondary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); overflow: hidden; }
+  #kb-canvas { width: 100%; height: 100%; }
+  #kb-hint { margin-top: 0.75rem; font-size: 13px; color: var(--color-text-secondary); font-family: var(--font-sans); text-align: center; }
+  #kb-key-display { margin-top: 0.5rem; background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 14px; font-size: 13px; color: var(--color-text-secondary); font-family: var(--font-sans); display: flex; align-items: center; gap: 10px; }
+  #kb-key-badge { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: 6px; padding: 2px 10px; font-weight: 500; color: var(--color-text-primary); font-size: 13px; min-width: 40px; text-align: center; }
+  .kb-led { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: #888; flex-shrink: 0; }
+  .kb-led.on { background: #1D9E75; }
+  .kb-led.off { background: #E24B4A; }
+  #kb-controls { display: flex; gap: 8px; margin-top: 0.75rem; }
+  #kb-controls button { flex: 1; }
+</style>
+
+<div id="kb-root" tabindex="-1">
+  <div class="kb-stats">
+    <div class="kb-stat">
+      <div class="kb-stat-label">Estado actual</div>
+      <div class="kb-stat-val" id="stat-state">—</div>
+    </div>
+    <div class="kb-stat">
+      <div class="kb-stat-label">Pulsos (ruido)</div>
+      <div class="kb-stat-val" id="stat-glitches">0</div>
+    </div>
+    <div class="kb-stat">
+      <div class="kb-stat-label">Tiempo presionado</div>
+      <div class="kb-stat-val" id="stat-held">0.0s</div>
+    </div>
+    <div class="kb-stat">
+      <div class="kb-stat-label">Estabilidad</div>
+      <div class="kb-stat-val" id="stat-stability">—</div>
+    </div>
+  </div>
+
+  <div id="kb-canvas-wrap">
+    <canvas id="kb-canvas"></canvas>
+  </div>
+
+  <div id="kb-key-display">
+    <span class="kb-led" id="kb-led"></span>
+    <span>Tecla monitoreada:</span>
+    <span id="kb-key-badge">ninguna</span>
+    <span style="margin-left:auto; color: var(--color-text-tertiary); font-size:12px;">Presioná cualquier tecla para comenzar</span>
+  </div>
+
+  <div id="kb-controls">
+    <button onclick="resetAll()">Reiniciar</button>
+    <button onclick="togglePause()" id="btn-pause">Pausar</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('kb-canvas');
+const ctx = canvas.getContext('2d');
+const HISTORY = 600;
+const POLL_MS = 16;
+
+let signal = new Array(HISTORY).fill(0);
+let currentKey = null;
+let keyDown = false;
+let glitches = 0;
+let heldMs = 0;
+let lastState = 0;
+let lastHeldStart = null;
+let paused = false;
+let totalSamples = 0;
+let stableSamples = 0;
+let lastGlitchCheck = null;
+
+function resize() {
+  const wrap = document.getElementById('kb-canvas-wrap');
+  canvas.width = wrap.clientWidth * devicePixelRatio;
+  canvas.height = wrap.clientHeight * devicePixelRatio;
+  canvas.style.width = wrap.clientWidth + 'px';
+  canvas.style.height = wrap.clientHeight + 'px';
+  draw();
+}
+
+window.addEventListener('keydown', e => {
+  if (paused) return;
+  if (!currentKey) currentKey = e.code;
+  if (e.code === currentKey && !keyDown) {
+    keyDown = true;
+    lastHeldStart = Date.now();
+    document.getElementById('kb-key-badge').textContent = formatKey(e.key, e.code);
+    document.getElementById('kb-led').className = 'kb-led on';
+  }
+  e.preventDefault();
+}, { passive: false });
+
+window.addEventListener('keyup', e => {
+  if (paused) return;
+  if (e.code === currentKey) {
+    keyDown = false;
+    if (lastHeldStart) heldMs += Date.now() - lastHeldStart;
+    lastHeldStart = null;
+    document.getElementById('kb-led').className = 'kb-led off';
+  }
+});
+
+function formatKey(key, code) {
+  if (key === ' ') return 'Space';
+  if (key.length === 1) return key.toUpperCase();
+  return key;
+}
+
+function resetAll() {
+  signal = new Array(HISTORY).fill(0);
+  glitches = 0; heldMs = 0; currentKey = null; keyDown = false;
+  lastState = 0; lastHeldStart = null; totalSamples = 0; stableSamples = 0; lastGlitchCheck = null;
+  document.getElementById('kb-key-badge').textContent = 'ninguna';
+  document.getElementById('kb-led').className = 'kb-led';
+  document.getElementById('stat-state').textContent = '—';
+  document.getElementById('stat-state').className = 'kb-stat-val';
+  document.getElementById('stat-glitches').textContent = '0';
+  document.getElementById('stat-glitches').className = 'kb-stat-val';
+  document.getElementById('stat-held').textContent = '0.0s';
+  document.getElementById('stat-stability').textContent = '—';
+  document.getElementById('stat-stability').className = 'kb-stat-val';
+  draw();
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('btn-pause').textContent = paused ? 'Reanudar' : 'Pausar';
+  if (!paused && lastHeldStart === null && keyDown) lastHeldStart = Date.now();
+  if (paused && lastHeldStart !== null) { heldMs += Date.now() - lastHeldStart; lastHeldStart = null; }
+}
+
+function isDark() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const dark = isDark();
+  const gridColor = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const labelColor = dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
+  const lineOn = '#1D9E75';
+  const lineOff = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)';
+  const fillOn = dark ? 'rgba(29,158,117,0.18)' : 'rgba(29,158,117,0.12)';
+  const glitchColor = '#E24B4A';
+
+  const PAD_L = 36, PAD_R = 8, PAD_T = 16, PAD_B = 28;
+  const gW = W - PAD_L - PAD_R;
+  const gH = H - PAD_T - PAD_B;
+
+  ctx.strokeStyle = gridColor;
+  ctx.lineWidth = 1;
+  for (let y of [0, 0.5, 1]) {
+    const yy = PAD_T + gH * (1 - y);
+    ctx.beginPath(); ctx.moveTo(PAD_L, yy); ctx.lineTo(W - PAD_R, yy); ctx.stroke();
+  }
+
+  ctx.fillStyle = labelColor;
+  ctx.font = `${10 * devicePixelRatio}px monospace`;
+  ctx.textAlign = 'right';
+  ctx.fillText('1', PAD_L - 4, PAD_T + 4);
+  ctx.fillText('0', PAD_L - 4, PAD_T + gH + 4);
+
+  ctx.textAlign = 'center';
+  ctx.fillText('← tiempo', PAD_L + gW / 2, H - 4);
+
+  if (signal.length < 2) return;
+
+  const step = gW / (HISTORY - 1);
+
+  ctx.beginPath();
+  for (let i = 0; i < signal.length; i++) {
+    const x = PAD_L + i * step;
+    const y = PAD_T + gH * (1 - signal[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  const pathCopy = new Path2D(ctx.currentPath);
+
+  ctx.save();
+  ctx.beginPath();
+  for (let i = 0; i < signal.length; i++) {
+    const x = PAD_L + i * step;
+    const y = PAD_T + gH * (1 - signal[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.lineTo(PAD_L + (signal.length - 1) * step, PAD_T + gH);
+  ctx.lineTo(PAD_L, PAD_T + gH);
+  ctx.closePath();
+  ctx.fillStyle = fillOn;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath();
+  for (let i = 0; i < signal.length; i++) {
+    const x = PAD_L + i * step;
+    const y = PAD_T + gH * (1 - signal[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = lineOn;
+  ctx.lineWidth = 2 * devicePixelRatio;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  ctx.restore();
+
+  for (let i = 1; i < signal.length; i++) {
+    if (signal[i - 1] !== signal[i]) {
+      const x = PAD_L + i * step;
+      const prevExpected = signal[Math.max(0, i - 3)];
+      const prevPrev = i >= 4 ? signal[i - 4] : signal[0];
+      const isGlitch = (prevPrev === prevExpected) &&
+        (i + 2 < signal.length && signal[i + 2] === prevExpected);
+      if (isGlitch) {
+        ctx.strokeStyle = glitchColor;
+        ctx.lineWidth = 1.5 * devicePixelRatio;
+        ctx.beginPath();
+        ctx.moveTo(x, PAD_T);
+        ctx.lineTo(x, PAD_T + gH);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function update() {
+  if (!paused) {
+    const cur = keyDown ? 1 : 0;
+
+    if (cur !== lastState && currentKey) {
+      if (lastGlitchCheck !== null) {
+        const held = cur === 0;
+        const samplesSinceLast = signal.length > 0 ? 1 : 0;
+        glitches++;
+        document.getElementById('stat-glitches').textContent = glitches;
+        document.getElementById('stat-glitches').className = 'kb-stat-val ' + (glitches > 0 ? 'bad' : 'good');
+      }
+      lastGlitchCheck = Date.now();
+    }
+    lastState = cur;
+
+    signal.push(cur);
+    if (signal.length > HISTORY) signal.shift();
+
+    if (currentKey) {
+      totalSamples++;
+      if (cur === 1) stableSamples++;
+
+      const held = heldMs + (lastHeldStart ? Date.now() - lastHeldStart : 0);
+      document.getElementById('stat-held').textContent = (held / 1000).toFixed(1) + 's';
+
+      document.getElementById('stat-state').textContent = cur === 1 ? 'PRESIONADA' : 'SUELTA';
+      document.getElementById('stat-state').className = 'kb-stat-val ' + (cur === 1 ? 'good' : '');
+
+      if (totalSamples > 30) {
+        const pct = Math.round((glitches === 0 ? 100 : Math.max(0, 100 - glitches * 5)));
+        document.getElementById('stat-stability').textContent = pct + '%';
+        document.getElementById('stat-stability').className = 'kb-stat-val ' + (pct >= 90 ? 'good' : 'bad');
+      }
+    }
+  }
+
+  draw();
+  setTimeout(update, POLL_MS);
+}
+
+window.addEventListener('resize', resize);
+resize();
+update();
+
+document.getElementById('kb-root').addEventListener('click', () => {
+  document.getElementById('kb-root').focus();
+});
+</script>
