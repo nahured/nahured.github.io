@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Examen — Generación Distribuida Solar Fotovoltaica</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sun: #F5A623;
+    --sun-dark: #D4881A;
+    --sky: #0A1628;
+    --sky-mid: #0F2044;
+    --sky-light: #162B55;
+    --panel: #1C3461;
+    --accent: #3DD6F5;
+    --accent2: #F5A623;
+    --correct: #2ECC71;
+    --wrong: #E74C3C;
+    --neutral: #4A6FA5;
+    --text: #E8EDF5;
+    --text-dim: #8DA4C8;
+    --card: #0F2044;
+    --card-border: #1E3A6E;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--sky);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SUN RAYS BG */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 900px; height: 900px;
+    background: radial-gradient(ellipse at center, rgba(245,166,35,0.12) 0%, rgba(245,166,35,0.04) 40%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    text-align: center;
+    padding: 60px 20px 40px;
+    border-bottom: 1px solid var(--card-border);
+    background: linear-gradient(180deg, rgba(245,166,35,0.07) 0%, transparent 100%);
+    z-index: 1;
+  }
+
+  .sun-icon {
+    display: inline-block;
+    width: 56px; height: 56px;
+    background: var(--sun);
+    border-radius: 50%;
+    box-shadow: 0 0 0 8px rgba(245,166,35,0.15), 0 0 0 16px rgba(245,166,35,0.07), 0 0 60px rgba(245,166,35,0.4);
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .sun-icon::before {
+    content: '☀';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  header h1 {
+    font-size: clamp(1.5rem, 3vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    color: #fff;
+  }
+  header h1 span { color: var(--sun); }
+
+  header p {
+    margin-top: 10px;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    font-weight: 300;
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,22,40,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--card-border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .stats-bar .stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .stats-bar .stat strong {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+  .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-answered { background: var(--accent); }
+  .dot-correct  { background: var(--correct); }
+  .dot-wrong    { background: var(--wrong); }
+
+  .progress-wrap {
+    flex: 1;
+    min-width: 160px;
+    height: 6px;
+    background: var(--sky-light);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sun), var(--accent));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* MAIN */
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 20px 120px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* SECTION HEADING */
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 50px 0 24px;
+  }
+  .section-number {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--sun);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border: 1px solid rgba(245,166,35,0.3);
+    border-radius: 4px;
+  }
+  .section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.3px;
+  }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--card-border), transparent);
+  }
+
+  /* QUESTION CARD */
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+  }
+  .question-card:hover {
+    border-color: rgba(61,214,245,0.2);
+  }
+
+  /* State borders */
+  .question-card.all-correct  { border-color: rgba(46,204,113,0.5); box-shadow: 0 0 20px rgba(46,204,113,0.08); }
+  .question-card.has-wrong    { border-color: rgba(231,76,60,0.4);  box-shadow: 0 0 20px rgba(231,76,60,0.08); }
+
+  .question-number {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .question-text {
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  /* OPTIONS */
+  .options { display: flex; flex-direction: column; gap: 8px; }
+
+  .option-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1.5px solid var(--card-border);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    position: relative;
+    user-select: none;
+  }
+  .option-label:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: rgba(61,214,245,0.05);
+  }
+
+  .option-label input[type="radio"] { display: none; }
+
+  .option-key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px; height: 26px;
+    border-radius: 6px;
+    background: var(--sky-light);
+    border: 1.5px solid var(--neutral);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .option-text {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text);
+    padding-top: 2px;
+  }
+
+  /* Selected */
+  .option-label.selected { border-color: var(--accent); background: rgba(61,214,245,0.08); }
+  .option-label.selected .option-key { background: var(--accent); border-color: var(--accent); color: var(--sky); }
+
+  /* After reveal */
+  .option-label.correct-answer {
+    border-color: var(--correct) !important;
+    background: rgba(46,204,113,0.1) !important;
+  }
+  .option-label.correct-answer .option-key {
+    background: var(--correct) !important;
+    border-color: var(--correct) !important;
+    color: #fff !important;
+  }
+  .option-label.wrong-answer {
+    border-color: var(--wrong) !important;
+    background: rgba(231,76,60,0.1) !important;
+  }
+  .option-label.wrong-answer .option-key {
+    background: var(--wrong) !important;
+    border-color: var(--wrong) !important;
+    color: #fff !important;
+  }
+  .option-label.disabled { cursor: default; }
+  .option-label.dimmed { opacity: 0.4; }
+
+  /* Result badge per question */
+  .result-badge {
+    display: none;
+    position: absolute;
+    top: -10px; right: 16px;
+    font-size: 0.72rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    letter-spacing: 1px;
+  }
+  .result-badge.show { display: inline-block; }
+  .result-badge.ok { background: var(--correct); color: #fff; }
+  .result-badge.fail { background: var(--wrong); color: #fff; }
+
+  /* SUBMIT BUTTON */
+  .submit-wrap {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    background: linear-gradient(0deg, rgba(10,22,40,1) 60%, transparent);
+    padding: 20px 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn-submit {
+    padding: 14px 40px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Sora', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: linear-gradient(135deg, var(--sun), #FF8C00);
+    color: #0A1628;
+    box-shadow: 0 4px 24px rgba(245,166,35,0.35);
+    letter-spacing: 0.2px;
+  }
+  .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(245,166,35,0.5);
+  }
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: default;
+    transform: none;
+  }
+
+  .btn-reset {
+    padding: 14px 28px;
+    border: 1.5px solid var(--card-border);
+    border-radius: var(--radius);
+    font-family: 'Sora', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: transparent;
+    color: var(--text-dim);
+  }
+  .btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+  .unanswered-msg {
+    font-size: 0.85rem;
+    color: var(--wrong);
+    font-family: 'IBM Plex Mono', monospace;
+    display: none;
+  }
+
+  /* RESULTS PANEL */
+  .results-panel {
+    display: none;
+    background: linear-gradient(135deg, var(--sky-mid), var(--panel));
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 40px;
+    margin: 50px 0 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .results-panel::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    width: 400px; height: 400px;
+    background: radial-gradient(ellipse, rgba(245,166,35,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .results-panel.show { display: block; }
+
+  .results-emoji { font-size: 3.5rem; margin-bottom: 16px; display: block; }
+  .results-grade {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 700;
+    color: var(--sun);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .results-label {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 8px 0 4px;
+    color: #fff;
+  }
+  .results-sub { color: var(--text-dim); font-size: 0.95rem; }
+
+  .results-grid {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+  }
+  .res-stat { text-align: center; }
+  .res-stat-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 600;
+  }
+  .res-stat-num.ok { color: var(--correct); }
+  .res-stat-num.fail { color: var(--wrong); }
+  .res-stat-num.neutral { color: var(--accent); }
+  .res-stat-label { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
+
+  .grade-bar-wrap {
+    margin: 24px auto 0;
+    max-width: 360px;
+    height: 10px;
+    background: var(--sky-light);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .grade-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1s cubic-bezier(0.22,1,0.36,1);
+    background: linear-gradient(90deg, var(--wrong), var(--sun), var(--correct));
+  }
+
+  /* SCROLL TO TOP */
+  .scroll-top {
+    position: fixed;
+    bottom: 100px;
+    right: 24px;
+    z-index: 300;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .scroll-top.visible { display: flex; }
+  .scroll-top:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .question-card { padding: 20px 16px; }
+    .results-panel { padding: 28px 20px; }
+    .stats-bar { padding: 10px 16px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="sun-icon"></div>
+  <h1>Examen · <span>Generación Distribuida</span><br>Solar Fotovoltaica</h1>
+  <p>100 preguntas de opción múltiple · Evaluación Integral</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat">
+    <span class="stat-dot dot-answered"></span>
+    Respondidas: <strong id="count-answered">0</strong>/100
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+  <div class="stat">
+    <span class="stat-dot dot-correct"></span>
+    <strong id="count-correct">—</strong>
+  </div>
+  <div class="stat">
+    <span class="stat-dot dot-wrong"></span>
+    <strong id="count-wrong">—</strong>
+  </div>
+</div>
+
+<main id="main-content">
+  <!-- Questions injected by JS -->
+</main>
+
+<div class="results-panel" id="results-panel">
+  <span class="results-emoji" id="results-emoji">🎓</span>
+  <div class="results-grade" id="results-grade">—</div>
+  <div class="results-label" id="results-label">—</div>
+  <div class="results-sub" id="results-sub">—</div>
+  <div class="grade-bar-wrap"><div class="grade-bar" id="grade-bar" style="width:0%"></div></div>
+  <div class="results-grid">
+    <div class="res-stat"><div class="res-stat-num ok" id="r-correct">—</div><div class="res-stat-label">✔ Correctas</div></div>
+    <div class="res-stat"><div class="res-stat-num fail" id="r-wrong">—</div><div class="res-stat-label">✘ Incorrectas</div></div>
+    <div class="res-stat"><div class="res-stat-num neutral" id="r-pct">—</div><div class="res-stat-label">Porcentaje</div></div>
+  </div>
+</div>
+
+<div class="submit-wrap">
+  <span class="unanswered-msg" id="unanswered-msg">⚠ Respondé todas las preguntas antes de enviar</span>
+  <button class="btn-submit" id="btn-submit">Verificar Respuestas</button>
+  <button class="btn-reset" id="btn-reset" style="display:none">↩ Reiniciar Examen</button>
+</div>
+
+<button class="scroll-top" id="scroll-top" title="Volver arriba">↑</button>
+
+<script>
+const SECTIONS = [
+  { title: "ENERGÍA SOLAR FOTOVOLTAICA — CONTEXTO Y FUNDAMENTOS", range: [1, 10] },
+  { title: "LOS PANELES FOTOVOLTAICOS", range: [11, 25] },
+  { title: "CONEXIONADO DE PANELES", range: [26, 32] },
+  { title: "EL INVERSOR", range: [33, 42] },
+  { title: "SISTEMAS CONECTADOS A RED (ON-GRID)", range: [43, 50] },
+  { title: "SISTEMAS AISLADOS (OFF-GRID)", range: [51, 62] },
+  { title: "SISTEMAS HÍBRIDOS", range: [63, 67] },
+  { title: "DIMENSIONAMIENTO", range: [68, 82] },
+  { title: "ESTRUCTURAS E INTEGRACIÓN ARQUITECTÓNICA", range: [83, 89] },
+  { title: "BUENAS PRÁCTICAS Y REQUISITOS TÉCNICOS", range: [90, 100] },
+];
+
+const QUESTIONS = [
+  // SECTION 1
+  {
+    q: "¿Cuál es la tendencia global de la capacidad instalada en energía solar fotovoltaica en los últimos años?",
+    opts: ["Se ha mantenido estable", "Ha disminuido por los altos costos", "Ha crecido exponencialmente, triplicándose en los últimos 5 años", "Ha crecido linealmente en un 10% anual"],
+    ans: 2
+  },
+  {
+    q: "En la matriz energética argentina al momento de publicación del manual, ¿qué porcentaje representa la energía solar fotovoltaica?",
+    opts: ["4,4%", "6,0%", "1,1%", "27,2%"],
+    ans: 2
+  },
+  {
+    q: "¿Cuál es la principal razón por la que el precio de los paneles fotovoltaicos ha declinado fuertemente en los últimos años?",
+    opts: ["Reducción de la calidad de los materiales", "Aumento en la producción de escala", "Subsidios gubernamentales directos a fabricantes", "Disminución de la demanda mundial"],
+    ans: 1
+  },
+  {
+    q: "¿Qué característica del recurso solar argentino destaca el manual?",
+    opts: ["Es el mejor del mundo sin excepción", "Es uno de los mejores del mundo para el aprovechamiento de la tecnología fotovoltaica", "Es adecuado solo en la región patagónica", "Es inferior al promedio global"],
+    ans: 1
+  },
+  {
+    q: "¿Qué tipo de sistema fotovoltaico interactúa directamente con la red eléctrica, inyectando energía a la misma?",
+    opts: ["Sistema aislado (Off-Grid)", "Sistema híbrido", "Sistema conectado a red (On-Grid)", "Sistema de almacenamiento autónomo"],
+    ans: 2
+  },
+  {
+    q: "¿Qué función cumplen las baterías en un sistema Off-Grid?",
+    opts: ["Estabilizan la frecuencia de la red", "Almacenan la energía generada durante el día para usarla cuando no hay sol", "Convierten la corriente continua en alterna", "Regulan la tensión de salida al inversor"],
+    ans: 1
+  },
+  {
+    q: "Los sistemas híbridos combinan características de los sistemas On-Grid y Off-Grid. ¿Cuál es su función adicional respecto a los sistemas On-Grid convencionales?",
+    opts: ["Generan energía únicamente con baterías", "No pueden inyectar energía a la red", "Gestionan la energía para maximizar el autoconsumo y cuentan con circuito de emergencia alimentado por baterías", "Funcionan solo en zonas sin red eléctrica"],
+    ans: 2
+  },
+  {
+    q: "Según el manual, ¿cuál es la tecnología de mayor proyección de crecimiento dentro de las energías renovables?",
+    opts: ["Eólica offshore", "Bioenergía", "Solar fotovoltaica distribuida", "Solar de concentración"],
+    ans: 2
+  },
+  {
+    q: "¿Por qué la tecnología solar fotovoltaica es la más utilizada en instalaciones de generación distribuida?",
+    opts: ["Por su bajo costo de mantenimiento exclusivamente", "Por su escalabilidad y facilidad de montaje", "Por ser la única tecnología renovable disponible", "Por requerir poca radiación solar para funcionar"],
+    ans: 1
+  },
+  {
+    q: "¿A qué público va dirigido principalmente el manual de Generación Distribuida Solar Fotovoltaica?",
+    opts: ["Usuarios residenciales que quieren instalar sus propios paneles", "Profesionales que se dediquen al aprovechamiento fotovoltaico de la energía solar", "Funcionarios del gobierno nacional", "Fabricantes de paneles solares"],
+    ans: 1
+  },
+  // SECTION 2
+  {
+    q: "¿Qué eficiencia de conversión ofrece, aproximadamente, la tecnología de fabricación basada en silicio convencional?",
+    opts: ["6%", "30%", "18%", "50%"],
+    ans: 2
+  },
+  {
+    q: "¿Cuál es la eficiencia de conversión de la tecnología \"multijuntura\"?",
+    opts: ["18%", "20%", "6%", "30%"],
+    ans: 3
+  },
+  {
+    q: "¿Qué ventaja tienen las celdas fotoelectroquímicas respecto a las convencionales de silicio?",
+    opts: ["Mayor eficiencia total bajo cualquier condición", "Son más eficientes en condiciones de días nublados", "No requieren mantenimiento", "Tienen mayor potencia por metro cuadrado"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es la eficiencia de conversión de las celdas solares fotoelectroquímicas?",
+    opts: ["18%", "20%", "30%", "6%"],
+    ans: 3
+  },
+  {
+    q: "¿Cuáles son los tres tipos de celdas de silicio existentes?",
+    opts: ["Monocristalino, policristalino y amorfo", "Orgánico, inorgánico y mixto", "Rígido, flexible y semitransparente", "Monocristalino, bifacial y de película delgada"],
+    ans: 0
+  },
+  {
+    q: "Las condiciones estándar de ensayo (STC) incluyen: temperatura de celda de 25 °C, irradiancia de 1000 W/m² y:",
+    opts: ["Masa de aire AM 1.0", "Masa de aire AM 1.5", "Humedad relativa del 50%", "Viento de 1 m/s"],
+    ans: 1
+  },
+  {
+    q: "¿Qué significa \"Watt Pico\" (Wp)?",
+    opts: ["La potencia máxima que puede generar un panel bajo cualquier condición", "La potencia que genera el panel bajo condiciones STC", "La potencia promedio anual del panel", "La potencia del panel a temperatura ambiente real"],
+    ans: 1
+  },
+  {
+    q: "¿Qué indica el parámetro Voc de un panel fotovoltaico?",
+    opts: ["La corriente de cortocircuito", "La tensión en el punto de máxima potencia", "La máxima tensión que se puede obtener del panel con los conectores sin carga", "La tensión de operación nominal"],
+    ans: 2
+  },
+  {
+    q: "¿Qué indica el parámetro Isc de un panel fotovoltaico?",
+    opts: ["La tensión máxima del panel", "La corriente en el punto de máxima potencia", "La máxima corriente que se puede extraer del panel (cortocircuitando sus terminales)", "La corriente de arranque del inversor"],
+    ans: 2
+  },
+  {
+    q: "¿Qué es la curva I-V de un módulo fotovoltaico?",
+    opts: ["La variación de la irradiación en función del tiempo", "La variación de la corriente en función de la tensión del panel", "La variación de la potencia en función de la temperatura", "La relación entre voltaje y eficiencia del inversor"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es la principal razón para usar silicio en la mayoría de los paneles comercializados?",
+    opts: ["Es el material más eficiente sin excepción", "Presenta la mejor relación de rendimiento en función de su precio", "Es el único material semiconductor disponible", "Resiste mejor las condiciones climáticas extremas"],
+    ans: 1
+  },
+  {
+    q: "¿Qué son las celdas fotovoltaicas respecto al panel solar?",
+    opts: ["Son los conectores del panel", "Son las unidades más pequeñas que componen el panel", "Son el circuito de control del panel", "Son los diodos de protección del panel"],
+    ans: 1
+  },
+  {
+    q: "¿Qué relación existe entre celdas, paneles y arreglos en una instalación fotovoltaica?",
+    opts: ["Un arreglo está compuesto por celdas, y las celdas por paneles", "Las celdas componen los paneles, y los paneles componen el arreglo o cadena", "Los paneles componen las celdas, y las celdas el arreglo", "Son términos equivalentes sin diferencia jerárquica"],
+    ans: 1
+  },
+  {
+    q: "La tecnología de película delgada se fabrica a partir de:",
+    opts: ["Silicio monocristalino purificado", "La superposición de diferentes películas de espesores nanométricos controlados", "Fotosíntesis artificial en laboratorio", "Aleaciones de aluminio y carbono"],
+    ans: 1
+  },
+  {
+    q: "¿Para qué aplicaciones específicas se utilizan los módulos de tecnología multijuntura de mayor eficiencia?",
+    opts: ["Instalaciones residenciales urbanas", "Plantas de generación de gran escala", "Industria aeroespacial y concentración solar", "Sistemas de alumbrado público"],
+    ans: 2
+  },
+  // SECTION 3
+  {
+    q: "¿Qué efecto produce la conexión en serie de paneles fotovoltaicos?",
+    opts: ["Suma las corrientes, mantiene la tensión", "Suma las tensiones, mantiene la corriente", "Duplica tanto la tensión como la corriente", "Reduce la tensión a la mitad"],
+    ans: 1
+  },
+  {
+    q: "¿Qué efecto produce la conexión en paralelo de paneles fotovoltaicos?",
+    opts: ["Suma las tensiones, mantiene la corriente", "Suma las corrientes, mantiene la tensión", "Duplica la potencia sin cambiar tensión ni corriente", "Reduce la corriente a la mitad"],
+    ans: 1
+  },
+  {
+    q: "¿Cómo se denomina internacionalmente a un conjunto de paneles conectados en serie?",
+    opts: ["Array o arreglo", "String o cadena", "Cluster o grupo", "Bank o banco"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es el conector más utilizado para la interconexión de paneles fotovoltaicos?",
+    opts: ["RJ45", "MC4", "USB tipo C", "Anderson SB"],
+    ans: 1
+  },
+  {
+    q: "¿Qué característica especial debe tener el cable usado con conectores MC4?",
+    opts: ["Ser de color azul para diferenciarlo del cableado eléctrico convencional", "Ser de aluminio para mayor conductividad", "Tener doble aislamiento y protección UV (cable \"Solar\")", "Tener una sección mínima de 10 mm²"],
+    ans: 2
+  },
+  {
+    q: "¿Qué son los \"splitters\" en el contexto de paneles fotovoltaicos?",
+    opts: ["Dispositivos que dividen la potencia del inversor", "Accesorios para conectar series o paralelos de varias filas (strings)", "Fusibles especiales para circuitos DC", "Reguladores de tensión para baterías"],
+    ans: 1
+  },
+  {
+    q: "¿Por qué rara vez se utiliza un único módulo fotovoltaico en una instalación?",
+    opts: ["Porque un solo módulo no puede conectarse al inversor", "Porque para lograr mayores potencias los módulos se interconectan entre sí", "Porque la normativa lo prohíbe", "Porque un solo módulo no genera corriente continua"],
+    ans: 1
+  },
+  // SECTION 4
+  {
+    q: "¿Cuál es la función principal del inversor de conexión a red?",
+    opts: ["Almacenar energía proveniente de los paneles", "Convertir la corriente continua (DC) de los paneles en corriente alterna (AC) ajustada a los valores de la red", "Regular la carga de las baterías", "Proteger los paneles de sobretensiones"],
+    ans: 1
+  },
+  {
+    q: "¿Qué ocurre con el inversor de conexión a red ante una ausencia de la red eléctrica?",
+    opts: ["Sigue funcionando con mayor potencia", "Se conecta automáticamente a las baterías de respaldo", "Se apaga inmediatamente", "Cambia a modo aislado automáticamente"],
+    ans: 2
+  },
+  {
+    q: "¿Por qué el inversor de red se apaga ante un corte de suministro?",
+    opts: ["Para proteger al inversor del sobrecalentamiento", "Para no poner en peligro a operarios de la distribuidora que puedan estar trabajando en la línea", "Por exigencia del fabricante para conservar la garantía", "Porque no puede generar tensión sin la frecuencia de referencia de la red"],
+    ans: 1
+  },
+  {
+    q: "¿Cómo funciona el inversor de red respecto a la forma de onda?",
+    opts: ["Como una fuente de tensión de onda cuadrada", "Como una fuente de corriente de forma de onda senoidal pura", "Como un rectificador de media onda", "Como una fuente de tensión triangular"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál de los siguientes tipos de onda genera el inversor aislado más básico?",
+    opts: ["Onda senoidal pura", "Onda cuadrada modificada", "Onda cuadrada", "Onda triangular"],
+    ans: 2
+  },
+  {
+    q: "¿Para qué tipo de cargas es compatible el inversor de onda cuadrada?",
+    opts: ["Motores trifásicos y electrónica sensible", "Solo iluminación y consumos muy simples", "Todo tipo de electrodomésticos", "Bombas de agua y heladeras"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es la diferencia principal entre un inversor de onda senoidal pura y uno de onda cuadrada modificada?",
+    opts: ["El senoidal puro es más barato pero menos eficiente", "El de onda cuadrada modificada puede usar todo tipo de aparatos con motor", "El senoidal puro puede utilizarse con todo tipo de aparatos con motor y electrónica sensible", "No hay diferencia práctica en el uso cotidiano"],
+    ans: 2
+  },
+  {
+    q: "¿Qué parámetros caracterizan a un inversor aislado?",
+    opts: ["Solo la potencia nominal de salida", "Potencia nominal de salida, potencia pico y tipo de onda de salida", "Tensión de entrada y eficiencia de conversión", "Frecuencia de operación y tensión de baterías"],
+    ans: 1
+  },
+  {
+    q: "¿Cuándo se configuran los parámetros de \"código de red\" en un inversor de conexión a red?",
+    opts: ["Cada vez que se enciende el equipo", "Cuando se initializa el equipo por primera vez, quedando luego bloqueados para el usuario", "Mensualmente mediante actualización remota", "Solo cuando la distribuidora lo requiere"],
+    ans: 1
+  },
+  {
+    q: "¿En qué contextos se utilizan los inversores aislados?",
+    opts: ["En grandes parques solares conectados a la red de alta tensión", "En zonas donde la red eléctrica no está presente, como escuelas rurales o refugios de montaña", "En edificios de departamentos como respaldo de emergencia", "Solo en sistemas industriales de gran potencia"],
+    ans: 1
+  },
+  // SECTION 5
+  {
+    q: "¿Cuáles son los componentes esenciales de un sistema conectado a red (On-Grid)?",
+    opts: ["Paneles, baterías, regulador y consumo", "Paneles, inversor de red, protecciones, cables y medidor bidireccional", "Paneles, inversor aislado, baterías y cargador", "Paneles, transformador, fusibles y tablero de distribución"],
+    ans: 1
+  },
+  {
+    q: "¿Cuáles son los tipos de dispositivos que pueden actuar como seccionamiento entre los paneles fotovoltaicos y el inversor?",
+    opts: ["Fusibles de vidrio, disyuntores AC y relés", "Interruptor termomagnético DC, base portafusible seccionable, e interruptor termomagnético AC especificado para DC", "Interruptores diferenciales, SPDs y fusibles NH", "Contactores, relés térmicos y disyuntores magnéticos"],
+    ans: 1
+  },
+  {
+    q: "¿Qué tipo de protección se requiere entre el inversor y la red en un sistema On-Grid?",
+    opts: ["Solo un interruptor termomagnético", "Interruptor termomagnético, interruptor diferencial y descargador de sobretensiones", "Fusible NH, varistor y disyuntor magnético", "Contactores y relés de protección"],
+    ans: 1
+  },
+  {
+    q: "Las protecciones Tipo 1 contra sobretensiones protegen contra:",
+    opts: ["Descargas atmosféricas indirectas como sobretensiones inducidas por rayos en los alrededores", "Descargas atmosféricas directas como a través de pararrayos o líneas eléctricas aéreas", "Variaciones de tensión de la red eléctrica", "Cortocircuitos entre paneles de diferentes strings"],
+    ans: 1
+  },
+  {
+    q: "¿Qué función tiene el medidor bidireccional en un sistema On-Grid?",
+    opts: ["Medir la potencia de los paneles fotovoltaicos", "Registrar tanto la energía consumida de la red como la energía inyectada a la misma", "Controlar la carga de las baterías", "Medir la temperatura de las celdas"],
+    ans: 1
+  },
+  {
+    q: "Las protecciones Tipo 2 contra sobretensiones están compuestas principalmente por:",
+    opts: ["Descargadores gaseosos y varistores de potencia", "Varistores", "Fusibles de alta velocidad", "Pararrayos activos"],
+    ans: 1
+  },
+  {
+    q: "¿Qué ley argentina regula el marco normativo de la generación distribuida?",
+    opts: ["Ley 24.065", "Ley 27.424", "Ley 25.019", "Ley 26.190"],
+    ans: 1
+  },
+  {
+    q: "¿Qué norma deben cumplir los inversores de conexión a red según la reglamentación de la ley de generación distribuida?",
+    opts: ["IEC 61215 únicamente", "IRAM 210013-21 o IEC 62109-2, IEC 62116 o VDE 0126-1-1 y códigos de red internacionales", "Solo la norma IEC 61730", "VDE 0100 y UL 1741"],
+    ans: 1
+  },
+  // SECTION 6
+  {
+    q: "¿Cuál es la diferencia principal entre un sistema Off-Grid y uno On-Grid en cuanto a componentes?",
+    opts: ["El sistema Off-Grid usa paneles de mayor potencia", "El sistema Off-Grid incorpora regulador de carga y baterías", "El sistema Off-Grid no requiere inversor", "El sistema Off-Grid usa inversores de red convencionales"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es la función del regulador de carga en un sistema aislado?",
+    opts: ["Convertir la corriente continua en alterna", "Estabilizar la tensión y corriente que entregan los paneles a la batería, protegiendo la batería de sobrecargas y descargas profundas", "Medir la energía generada por los paneles", "Regular la potencia que entrega el inversor al consumo"],
+    ans: 1
+  },
+  {
+    q: "¿Qué ocurriría si se conectan los paneles directamente a la batería sin regulador de carga?",
+    opts: ["El sistema funcionaría con mayor eficiencia", "La batería podría sobrecalentarse o, si el panel tiene menor tensión, la batería enviaría energía al panel dañándolo", "Los paneles generarían más potencia por efecto de la mayor tensión", "No pasaría nada, es una configuración válida para potencias pequeñas"],
+    ans: 1
+  },
+  {
+    q: "¿Qué tipo de regulador trabaja forzando a los módulos a la tensión de la batería mediante modulación de pulso?",
+    opts: ["MPPT", "PWM", "DC/DC activo", "Regulador analógico de tensión"],
+    ans: 1
+  },
+  {
+    q: "¿Qué significa MPPT en el contexto de reguladores de carga?",
+    opts: ["Maximum Protection Power Technology", "Maximum Peak Power Tracker (Rastreador del Máximo Punto de Potencia)", "Modular Panel Power Transformer", "Minimum Power Protection Transfer"],
+    ans: 1
+  },
+  {
+    q: "¿Cuánto porcentaje más de energía permite extraer un regulador MPPT respecto a un PWM?",
+    opts: ["5%", "15%", "30%", "50%"],
+    ans: 2
+  },
+  {
+    q: "¿Cuáles son los tres tipos de baterías utilizadas principalmente en sistemas aislados, clasificadas según el estado del electrolito?",
+    opts: ["Plomo-ácido, litio-ion y níquel-cadmio", "Electrolito líquido, electrolito absorbido (AGM) y electrolito en gel", "Sellada, abierta y semiabierta", "De alta descarga, media descarga y descarga lenta"],
+    ans: 1
+  },
+  {
+    q: "¿Por qué las baterías de automóvil no son adecuadas para sistemas aislados de energía solar?",
+    opts: ["Porque tienen demasiada capacidad para sistemas pequeños", "Porque solo tienen una profundidad de descarga del 30% y están diseñadas para arranques, no para descarga lenta", "Porque su tensión nominal no es compatible con los reguladores solares", "Porque se dañan con la radiación ultravioleta"],
+    ans: 1
+  },
+  {
+    q: "Las baterías de descarga profunda para sistemas renovables pueden descargarse hasta:",
+    opts: ["30% de su capacidad", "50% de su capacidad", "80% de su capacidad", "100% de su capacidad"],
+    ans: 2
+  },
+  {
+    q: "¿Qué significa que una batería tenga una descarga de C/5?",
+    opts: ["Que carga en 5 minutos", "Que se extrae el total de la energía que puede entregar la batería en 5 horas", "Que puede soportar 5 ciclos completos", "Que pierde el 5% de carga por hora en reposo"],
+    ans: 1
+  },
+  {
+    q: "¿Qué tipo de batería requiere controlar frecuentemente el nivel de electrolito y puede verse afectada por la temperatura ambiente?",
+    opts: ["Batería de electrolito en gel", "Batería AGM", "Batería de electrolito líquido", "Batería de litio-ion"],
+    ans: 2
+  },
+  {
+    q: "¿Por qué es más conveniente, como regla general, utilizar más unidades de menor tensión en un banco de baterías?",
+    opts: ["Porque tienen mayor capacidad de almacenamiento individual", "Porque cuando es necesario reemplazar alguna, se puede hacer incluso con el sistema funcionando", "Porque son más baratas por unidad", "Porque permiten mayor profundidad de descarga"],
+    ans: 1
+  },
+  // SECTION 7
+  {
+    q: "¿Cuál es la diferencia esencial entre un sistema híbrido y un sistema aislado?",
+    opts: ["Los sistemas híbridos usan paneles de mayor potencia", "Los sistemas híbridos no llevan regulador de carga entre paneles y baterías; el inversor mismo incorpora esa función", "Los sistemas híbridos no pueden conectarse a la red eléctrica", "Los sistemas aislados son más económicos por no usar inversor"],
+    ans: 1
+  },
+  {
+    q: "¿Qué hace un inversor híbrido cuando hay un corte en la red eléctrica?",
+    opts: ["Se apaga completamente hasta que vuelve la red", "Genera una red interna con la energía de las baterías, manteniendo ambas redes separadas eléctricamente", "Inyecta energía de las baterías directamente a la red pública", "Activa automáticamente el grupo electrógeno"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es el objetivo principal de gestión de energía en un sistema híbrido conectado a red?",
+    opts: ["Maximizar la inyección de energía a la red", "Maximizar el autoconsumo y disminuir la potencia requerida de la red", "Mantener las baterías siempre al 100% de carga", "Reducir la vida útil de las baterías para simplificar el mantenimiento"],
+    ans: 1
+  },
+  {
+    q: "¿Cuáles son los componentes esenciales de un sistema híbrido On-Grid?",
+    opts: ["Paneles, regulador PWM, baterías y medidor", "Paneles, inversor/cargador híbrido, protecciones, cables, baterías y eventualmente grupo electrógeno", "Solo paneles e inversor híbrido", "Paneles, inversor de red convencional y baterías de litio"],
+    ans: 1
+  },
+  {
+    q: "¿Cuáles son las protecciones utilizadas entre baterías e inversor en un sistema híbrido?",
+    opts: ["Las mismas que en sistemas On-Grid", "Solo fusibles de alta velocidad", "Las mismas que en sistemas Off-Grid o aislados", "No se requieren protecciones en ese tramo"],
+    ans: 2
+  },
+  // SECTION 8
+  {
+    q: "¿Cuáles son los dos datos esenciales para el dimensionamiento de un sistema fotovoltaico?",
+    opts: ["La marca del inversor y el área del techo disponible", "La demanda de energía y potencia, y la disponibilidad de radiación solar en el lugar", "El precio de la electricidad y la orientación del inmueble", "La temperatura ambiente máxima y la humedad relativa del lugar"],
+    ans: 1
+  },
+  {
+    q: "¿Cómo se define el ángulo de inclinación (β) de un panel fotovoltaico?",
+    opts: ["El ángulo entre el panel y el norte magnético", "El ángulo que forma la superficie del panel con el plano horizontal", "El ángulo de incidencia de los rayos solares al mediodía", "El ángulo entre el panel y la vertical"],
+    ans: 1
+  },
+  {
+    q: "¿Cómo se define el acimut (α) de un panel fotovoltaico?",
+    opts: ["El ángulo de inclinación respecto al suelo", "El ángulo entre la proyección horizontal de la normal a la superficie del panel y el meridiano del lugar", "La distancia entre el panel y el sol", "La orientación del techo según la brújula"],
+    ans: 1
+  },
+  {
+    q: "Para sistemas ubicados en el hemisferio sur, ¿cuál es la orientación óptima del panel?",
+    opts: ["Sur", "Este", "Norte", "Oeste"],
+    ans: 2
+  },
+  {
+    q: "¿Para qué se utilizan los \"discos de irradiación solar\"?",
+    opts: ["Para calcular la potencia pico del inversor", "Para estimar el porcentaje de energía anual que se pierde según la inclinación y orientación del panel respecto al máximo anual", "Para medir la temperatura de las celdas en operación", "Para calcular la separación entre filas de paneles"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es el valor de inclinación y orientación óptimos para la ciudad de Buenos Aires según el disco de irradiación solar?",
+    opts: ["30° de inclinación y orientación Este", "23° de inclinación y 0° de acimut (orientación Norte)", "45° de inclinación y orientación Noroeste", "40° de inclinación y orientación Sur"],
+    ans: 1
+  },
+  {
+    q: "Según el disco de irradiación solar, ¿cuál es el límite recomendado de pérdidas máximas por inclinación y orientación inadecuada?",
+    opts: ["5%", "10%", "20%", "30%"],
+    ans: 1
+  },
+  {
+    q: "¿Qué efecto produce la sombra sobre un panel fotovoltaico que está en serie con otros paneles sin diodo de bypass?",
+    opts: ["Reduce ligeramente la corriente del string", "El panel sombreado puede convertirse en una carga resistiva, consumiendo la potencia generada por el resto del string y aumentando su temperatura", "El inversor detecta el problema y desconecta solo ese panel", "La sombra no afecta a los paneles conectados en serie"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es la función del diodo de bypass en un panel fotovoltaico?",
+    opts: ["Bloquear el flujo de corriente en sentido inverso", "Si un panel está en sombra, permitir que la corriente de los demás paneles lo puentee sin pasar por él", "Regular la tensión máxima de salida del panel", "Proteger al panel de sobretensiones atmosféricas"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es la función del diodo de bloqueo en un panel fotovoltaico?",
+    opts: ["Desviar la corriente en caso de sombra parcial", "Garantizar que la corriente que sale del panel circule en una sola dirección, evitando que una cadena actúe como carga a otra", "Limitar la corriente máxima de salida del panel", "Proteger la caja de conexiones de la humedad"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es la condición para establecer la separación mínima entre filas de paneles fotovoltaicos?",
+    opts: ["Que cada fila no proyecte sombra sobre la siguiente en ningún momento del año", "Que cada fila reciba al menos 4 horas de radiación solar en el día del solsticio de invierno", "Que la sombra entre filas no supere el 5% del área del panel", "Que la separación sea igual a la longitud del panel más 50 cm"],
+    ans: 1
+  },
+  {
+    q: "Al calcular pérdidas por temperatura, si un panel tiene Pmax = 270 W a 25 °C y el coeficiente de temperatura de Pmax es de −0,41 %/°C, ¿cuánto genera a 70 °C?",
+    opts: ["270 W (la temperatura no afecta)", "220,18 W", "300 W", "185 W"],
+    ans: 1
+  },
+  {
+    q: "¿En qué rango se encuentra generalmente el rendimiento máximo de un inversor de conexión a red?",
+    opts: ["85–90%", "90–95%", "97–98%", "99–100%"],
+    ans: 2
+  },
+  {
+    q: "¿Qué es el factor de corrección FS utilizado en el dimensionamiento de sistemas On-Grid?",
+    opts: ["Un factor que corrige únicamente las pérdidas por temperatura", "Un factor de dimensionamiento que incluye todas las pérdidas del sistema (temperatura, rendimientos, cables, etc.) relacionado con la latitud del lugar", "La eficiencia nominal del inversor", "El cociente entre la potencia pico instalada y la demanda anual"],
+    ans: 1
+  },
+  {
+    q: "Para el ejemplo del manual (Buenos Aires, 4 paneles de 250 Wp, FS = 0,9), ¿cuánta energía anual genera el sistema?",
+    opts: ["4000 kWh", "2500 kWh", "1623 kWh", "900 kWh"],
+    ans: 2
+  },
+  // SECTION 9
+  {
+    q: "¿Qué tipo de estructura fotovoltaica se utiliza en tejados inclinados y fachadas, adaptándose a la inclinación de la superficie de montaje?",
+    opts: ["Estructura con triángulo inclinado", "Estructura coplanar", "Estructura monoposte", "Estructura biposte"],
+    ans: 1
+  },
+  {
+    q: "¿Para qué superficie se recomiendan las estructuras con triángulo inclinado?",
+    opts: ["Tejados inclinados únicamente", "Fachadas verticales", "Terrazas o tejados planos, aunque también pueden usarse en tejados con pendiente", "Instalaciones en el suelo exclusivamente"],
+    ans: 2
+  },
+  {
+    q: "¿Qué ventaja ofrece la estructura coplanar desde el punto de vista arquitectónico?",
+    opts: ["Permite orientar el panel en cualquier dirección", "Proporciona buena integración arquitectónica disminuyendo el impacto visual", "Es la más resistente a vientos fuertes", "Es la más económica de todas las opciones"],
+    ans: 1
+  },
+  {
+    q: "¿Cuándo se considera que existe \"integración arquitectónica\" de un sistema fotovoltaico?",
+    opts: ["Cuando los paneles se instalan en el techo sin estructura visible", "Cuando los paneles cumplen una doble función energética y arquitectónica, sustituyendo elementos constructivos convencionales", "Cuando los paneles son del mismo color que el tejado", "Cuando los paneles están conectados directamente al edificio sin cableado externo"],
+    ans: 1
+  },
+  {
+    q: "¿Qué se entiende por \"superposición arquitectónica\" de paneles?",
+    opts: ["Instalar paneles sobre otros paneles para mayor potencia", "Colocar los paneles paralelos a la envolvente del edificio, sin aceptar disposición horizontal, para favorecer la autolimpieza", "Integrar los paneles en las ventanas del edificio", "Superponer varias capas de celdas fotovoltaicas"],
+    ans: 1
+  },
+  {
+    q: "¿Qué regla fundamental debe seguirse para conseguir la integración o superposición de instalaciones solares en un edificio?",
+    opts: ["Instalar los paneles únicamente en el techo sur del edificio", "Mantener, dentro de lo posible, la alineación con los ejes principales de la edificación", "Usar solo paneles de color negro para mayor absorción", "Instalar los paneles en un ángulo fijo de 30°"],
+    ans: 1
+  },
+  {
+    q: "Las estructuras de piso (monoposte, biposte, triángulo inclinado) se vuelven más económicas a medida que:",
+    opts: ["Se usan en zonas de mayor irradiación solar", "Aumenta la cantidad de paneles a instalar", "Se instalan en zonas de menor viento", "Se usan paneles de menor potencia"],
+    ans: 1
+  },
+  // SECTION 10
+  {
+    q: "¿Qué equipo de protección personal (EPP) deben usar los instaladores de sistemas fotovoltaicos?",
+    opts: ["Solo guantes de trabajo comunes", "Casco, calzado de seguridad, guantes, mangas, protección ocular y protección contra descargas eléctricas", "Solamente arnés de seguridad para trabajos en altura", "Ropa de color visible y zapatos cerrados"],
+    ans: 1
+  },
+  {
+    q: "¿Qué se debe instalar antes de comenzar a trabajar en la instalación fotovoltaica en altura?",
+    opts: ["Señalización de obra en la vía pública", "Cuerdas de vida provisoria o definitiva por seguridad del personal", "Iluminación artificial para trabajar en caso de noche", "Sistema de comunicación con la distribuidora"],
+    ans: 1
+  },
+  {
+    q: "¿Qué norma de certificación se requiere para todos los paneles fotovoltaicos según la reglamentación de la ley 27.424?",
+    opts: ["IEC 61215 únicamente", "IEC 61730-1/2 (norma de construcción y seguridad)", "IRAM 210013-21", "VDE 0126-1-1"],
+    ans: 1
+  },
+  {
+    q: "Para módulos de silicio cristalino, ¿cuál de las siguientes certificaciones de diseño se menciona en el manual?",
+    opts: ["IEC 62109-2", "VDE 0126-1-1", "IEC 61215-1/2:2016", "IEC 62116"],
+    ans: 2
+  },
+  {
+    q: "¿Qué certificación de diseño corresponde a los módulos de tipo Película Delgada?",
+    opts: ["IEC 61215:2005", "IEC 61646:2008", "IRAM 210013-17", "IEC 61215-1/2:2016"],
+    ans: 1
+  },
+  {
+    q: "En un sistema Off-Grid, ¿cuál es la secuencia correcta de pasos para la puesta en marcha?",
+    opts: ["Paneles → regulador → baterías → inversor → consumo", "Baterías al inversor → baterías al regulador → paneles al regulador → inversor al consumo", "Inversor → paneles → baterías → consumo", "Consumo → baterías → paneles → regulador"],
+    ans: 1
+  },
+  {
+    q: "¿Cuál es la eficiencia aproximada de carga de un regulador PWM?",
+    opts: ["60%", "80%", "95–98%", "100%"],
+    ans: 1
+  },
+  {
+    q: "Para el dimensionamiento de baterías en un sistema aislado con una demanda de 2000 Wh/día y 3 días de autonomía, ¿qué capacidad mínima debería tener el banco?",
+    opts: ["2000 Wh", "6000 Wh", "4000 Wh", "1000 Wh"],
+    ans: 1
+  },
+  {
+    q: "¿Qué factor es esencial minimizar en los sistemas aislados para mejorar su desempeño?",
+    opts: ["La cantidad de paneles instalados", "Las pérdidas por longitud de cables, reguladores y baterías", "La tensión de las baterías", "La potencia pico del inversor"],
+    ans: 1
+  },
+  {
+    q: "¿Qué ocurre en un sistema On-Grid cuando la generación fotovoltaica supera el consumo instantáneo del usuario?",
+    opts: ["El inversor se apaga para evitar daños", "La energía excedente se inyecta a la red eléctrica", "La energía excedente se disipa como calor", "El sistema almacena el exceso en las baterías internas del inversor"],
+    ans: 1
+  },
+  {
+    q: "Según el ejemplo del manual para Buenos Aires (4 paneles de 250 Wp), ¿qué porcentaje aproximado de la energía total generada corresponde al autoconsumo estimado?",
+    opts: ["10%", "20%", "40%", "60%"],
+    ans: 2
+  },
+];
+
+const KEYS = ['A','B','C','D'];
+let submitted = false;
+
+function buildExam() {
+  const main = document.getElementById('main-content');
+  let sIdx = 0;
+  let html = '';
+
+  QUESTIONS.forEach((q, i) => {
+    const num = i + 1;
+    // Section heading
+    const sec = SECTIONS[sIdx];
+    if (sec && num === sec.range[0]) {
+      html += `
+        <div class="section-heading">
+          <span class="section-number">Sección ${sIdx + 1}</span>
+          <span class="section-title">${sec.title}</span>
+          <div class="section-line"></div>
+        </div>`;
+      if (num === sec.range[1] || i === QUESTIONS.length - 1) sIdx++;
+    }
+
+    html += `
+      <div class="question-card" id="card-${i}">
+        <span class="result-badge" id="badge-${i}"></span>
+        <span class="question-number">PREGUNTA ${String(num).padStart(3,'0')}</span>
+        <p class="question-text">${q.q}</p>
+        <div class="options" id="opts-${i}">
+          ${q.opts.map((opt, k) => `
+            <label class="option-label" id="opt-${i}-${k}" for="r-${i}-${k}">
+              <input type="radio" name="q${i}" id="r-${i}-${k}" value="${k}" onchange="onSelect(${i},${k})">
+              <span class="option-key">${KEYS[k]}</span>
+              <span class="option-text">${opt}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>`;
+
+    if (sec && num === sec.range[1]) sIdx++;
+  });
+
+  main.innerHTML = html;
+}
+
+function onSelect(qIdx, optIdx) {
+  if (submitted) return;
+  // Clear previous selection
+  QUESTIONS[qIdx].opts.forEach((_, k) => {
+    document.getElementById(`opt-${qIdx}-${k}`).classList.remove('selected');
+  });
+  document.getElementById(`opt-${qIdx}-${optIdx}`).classList.add('selected');
+  updateStats();
+}
+
+function getSelected(qIdx) {
+  for (let k = 0; k < QUESTIONS[qIdx].opts.length; k++) {
+    const el = document.getElementById(`r-${qIdx}-${k}`);
+    if (el && el.checked) return k;
+  }
+  return null;
+}
+
+function updateStats() {
+  let answered = 0;
+  QUESTIONS.forEach((_, i) => { if (getSelected(i) !== null) answered++; });
+  document.getElementById('count-answered').textContent = answered;
+  document.getElementById('progress-bar').style.width = (answered / QUESTIONS.length * 100) + '%';
+}
+
+function submitExam() {
+  const unanswered = [];
+  QUESTIONS.forEach((_, i) => { if (getSelected(i) === null) unanswered.push(i + 1); });
+
+  const msg = document.getElementById('unanswered-msg');
+  if (unanswered.length > 0) {
+    msg.style.display = 'inline';
+    // Scroll to first unanswered
+    document.getElementById(`card-${unanswered[0]-1}`).scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  msg.style.display = 'none';
+  submitted = true;
+
+  let correct = 0, wrong = 0;
+
+  QUESTIONS.forEach((q, i) => {
+    const sel = getSelected(i);
+    const card = document.getElementById(`card-${i}`);
+    const badge = document.getElementById(`badge-${i}`);
+
+    // Disable all options
+    q.opts.forEach((_, k) => {
+      const lbl = document.getElementById(`opt-${i}-${k}`);
+      lbl.classList.add('disabled');
+      document.getElementById(`r-${i}-${k}`).disabled = true;
+    });
+
+    if (sel === q.ans) {
+      correct++;
+      document.getElementById(`opt-${i}-${q.ans}`).classList.add('correct-answer');
+      card.classList.add('all-correct');
+      badge.className = 'result-badge show ok';
+      badge.textContent = '✔ CORRECTO';
+    } else {
+      wrong++;
+      document.getElementById(`opt-${i}-${sel}`).classList.add('wrong-answer');
+      document.getElementById(`opt-${i}-${q.ans}`).classList.add('correct-answer');
+      card.classList.add('has-wrong');
+      badge.className = 'result-badge show fail';
+      badge.textContent = '✘ INCORRECTO';
+      // Dim other options
+      q.opts.forEach((_, k) => {
+        if (k !== sel && k !== q.ans) document.getElementById(`opt-${i}-${k}`).classList.add('dimmed');
+      });
+    }
+  });
+
+  // Update stat bar
+  document.getElementById('count-correct').textContent = '✔ ' + correct;
+  document.getElementById('count-wrong').textContent = '✘ ' + wrong;
+
+  // Show results panel
+  const pct = Math.round(correct / QUESTIONS.length * 100);
+  const panel = document.getElementById('results-panel');
+  panel.classList.add('show');
+  document.getElementById('r-correct').textContent = correct;
+  document.getElementById('r-wrong').textContent = wrong;
+  document.getElementById('r-pct').textContent = pct + '%';
+  document.getElementById('results-grade').textContent = correct + '/100';
+
+  let emoji, label, sub;
+  if (pct >= 90)      { emoji='🏆'; label='Sobresaliente'; sub='Excelente dominio del contenido del manual.'; }
+  else if (pct >= 75) { emoji='🌟'; label='Muy Bueno'; sub='Sólido conocimiento de generación distribuida.'; }
+  else if (pct >= 60) { emoji='☀️'; label='Bueno'; sub='Buen nivel general, con algunos temas a repasar.'; }
+  else if (pct >= 50) { emoji='⚡'; label='Suficiente'; sub='Aprobado, pero conviene repasar el manual.'; }
+  else                { emoji='📘'; label='Insuficiente'; sub='Se recomienda releer el manual completo.'; }
+
+  document.getElementById('results-emoji').textContent = emoji;
+  document.getElementById('results-label').textContent = label;
+  document.getElementById('results-sub').textContent = sub;
+
+  setTimeout(() => {
+    document.getElementById('grade-bar').style.width = pct + '%';
+  }, 200);
+
+  panel.scrollIntoView({behavior:'smooth'});
+
+  // Toggle buttons
+  document.getElementById('btn-submit').style.display = 'none';
+  document.getElementById('btn-reset').style.display = 'inline-block';
+}
+
+function resetExam() {
+  submitted = false;
+  document.getElementById('results-panel').classList.remove('show');
+  document.getElementById('count-correct').textContent = '—';
+  document.getElementById('count-wrong').textContent = '—';
+  document.getElementById('count-answered').textContent = '0';
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('grade-bar').style.width = '0%';
+  document.getElementById('btn-submit').style.display = 'inline-block';
+  document.getElementById('btn-reset').style.display = 'none';
+  buildExam();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// Scroll to top button
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scroll-top');
+  btn.classList.toggle('visible', window.scrollY > 400);
+});
+document.getElementById('scroll-top').addEventListener('click', () => {
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+document.getElementById('btn-submit').addEventListener('click', submitExam);
+document.getElementById('btn-reset').addEventListener('click', resetExam);
+
+buildExam();
+</script>
+</body>
+</html>
